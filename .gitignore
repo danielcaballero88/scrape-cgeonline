@@ -1,5 +1,7 @@
+__pycache__
+
 .venv
-scrape-cgeonline.log
+scrape_cgeonline.log
 
 credentials.json
 token.json
