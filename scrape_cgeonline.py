@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import os
 import sys
 
 import requests
@@ -9,6 +10,9 @@ from bs4 import BeautifulSoup
 from dc_logging import get_logger
 
 from gmail_api_helper import gmail_create_and_send_draft
+
+HERE = os.path.dirname(__file__)
+LOGFILE = os.path.join(HERE, "scrape_cgeonline.log")
 
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
 DATES_URL = "/informacion/apertura-de-citas.html"
@@ -18,14 +22,14 @@ DATES_URL = "/informacion/apertura-de-citas.html"
 # logs.
 root_logger = get_logger(
     {
-        "file_name": "scrape_cgeonline.log",
+        "file_name": LOGFILE,
         "level": logging.WARNING,
     }
 )
 
 # The scraper logger is set up independently so any logging is done
 # here is not duplicated by the root logger (propagate = False).
-logger = get_logger({"name": "scraper", "file_name": "scrape_cgeonline.log"})
+logger = get_logger({"name": "scraper", "file_name": LOGFILE})
 logger.propagate = False
 
 
