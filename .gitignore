@@ -1,2 +1,5 @@
 .venv
 scrape-cgeonline.log
+
+credentials.json
+token.json
