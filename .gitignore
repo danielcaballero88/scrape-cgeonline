@@ -5,3 +5,6 @@ scrape_cgeonline.log
 
 credentials.json
 token.json
+
+temp/*
+temp.*
