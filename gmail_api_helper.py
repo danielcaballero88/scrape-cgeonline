@@ -10,6 +10,8 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 HERE = os.path.dirname(__file__)
+TOKEN_FILE = os.path.join(HERE, "token.json")
+CREDENTIALS_FILE = os.path.join(HERE, "credentials.json")
 
 # https://developers.google.com/gmail/api/auth/scopes
 SCOPES = [
@@ -22,21 +24,17 @@ def gmail_create_and_send_draft(subject, content):
     """Create a gmail draft and send it."""
     # Authentication
     creds = None
-    token_file_path = os.path.join(HERE, "token.json")
-    credentials_file_path = os.path.join(HERE, "credentials.json")
-    if os.path.exists(token_file_path):
-        creds = Credentials.from_authorized_user_file(token_file_path, SCOPES)
+    if os.path.exists(TOKEN_FILE):
+        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_file_path, SCOPES
-            )
+            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open(token_file_path, "w", encoding="utf-8") as token:
+        with open(TOKEN_FILE, "w", encoding="utf-8") as token:
             token.write(creds.to_json())
 
     # Create and send draft.
