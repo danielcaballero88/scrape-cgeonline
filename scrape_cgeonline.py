@@ -52,8 +52,7 @@ def scrape_cgeonline_dates_page():
     result = {}
 
     req = requests.get(CGEONLINE_URL + DATES_URL, timeout=10)
-    html_string = str(req.content, "windows-1250")
-    soup = BeautifulSoup(html_string, features="html.parser")
+    soup = BeautifulSoup(req.text, features="html.parser")
 
     rows = soup.find_all(
         lambda x: x.name == "tr" and "Registro Civil-Nacimientos" in x.text
