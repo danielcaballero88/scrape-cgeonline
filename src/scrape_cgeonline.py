@@ -1,6 +1,4 @@
-"""Python script to scrape cgeonline."""
-
-import argparse
+"""Python module to scrape cgeonline."""
 import logging
 import os
 import sys
@@ -9,10 +7,11 @@ import requests
 from bs4 import BeautifulSoup
 from dc_logging import get_logger
 
-from gmail_api_helper import gmail_create_and_send_draft
+from src.gmail_api_helper import gmail_create_and_send_draft
 
 HERE = os.path.dirname(__file__)
-LOGFILE = os.path.join(HERE, "scrape_cgeonline.log")
+BASE_DIR = os.path.dirname(HERE)
+LOGFILE = os.path.join(BASE_DIR, "log", "scrape_cgeonline.log")
 
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
 DATES_URL = "/informacion/apertura-de-citas.html"
@@ -33,7 +32,7 @@ logger = get_logger({"name": "scraper", "file_name": LOGFILE})
 logger.propagate = False
 
 
-def scrape_cgeonline_dates_page():
+def _scrape_cgeonline_dates_page():
     """Get the info for new appointments for births registering.
 
     Returns:
@@ -86,24 +85,10 @@ def scrape_cgeonline_dates_page():
     return result
 
 
-def parse_arguments():
-    """Parse passed arguments and return args Namespace."""
-    parser = argparse.ArgumentParser("")
-    parser.add_argument(
-        "--email-every-time",
-        dest="email_every_time",
-        action="store_true",
-        help="Sends email for every execution even it there is no new info.",
-    )
-    parsed_args = parser.parse_args()
-    return parsed_args
-
-
-if __name__ == "__main__":
-    args = parse_arguments()
-
+def scrape(email_every_time: bool):
+    """Main function to scrape cgeonline"""
     try:
-        row_data = scrape_cgeonline_dates_page()
+        row_data = _scrape_cgeonline_dates_page()
     except Exception as exc:
         logger.error(exc)
         gmail_create_and_send_draft(
@@ -116,7 +101,7 @@ if __name__ == "__main__":
 
         if row_data["proxima_apertura"] == "fecha por confirmar":
             logger.info("No new date: %s")
-            if args.email_every_time:
+            if email_every_time:
                 gmail_create_and_send_draft(
                     subject="No new date in cgeonline.",
                     content=str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,

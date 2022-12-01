@@ -10,8 +10,9 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 HERE = os.path.dirname(__file__)
-TOKEN_FILE = os.path.join(HERE, "token.json")
-CREDENTIALS_FILE = os.path.join(HERE, "credentials.json")
+BASE_DIR = os.path.dirname(HERE)
+TOKEN_FILE = os.path.join(BASE_DIR, "secrets", "token.json")
+CREDENTIALS_FILE = os.path.join(BASE_DIR, "secrets", "credentials.json")
 
 # https://developers.google.com/gmail/api/auth/scopes
 SCOPES = [
