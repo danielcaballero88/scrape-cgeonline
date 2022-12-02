@@ -59,3 +59,20 @@ def test_scrape_cgeonline_dates_page_error(mocker: MockerFixture):
 
     with pytest.raises(ValueError):
         scrape_cgeonline._scrape_cgeonline_dates_page()
+
+
+def test_scrape_cgeonline_dates_page_new_date(mocker: MockerFixture):
+    """Unit test for a scraping cgeonline dates whith a new date."""
+    mock_get_response = mocker.Mock(return_value=MockGetResponse("new_date"))
+    mocker.patch("requests.get", mock_get_response)
+
+    scraped_row = scrape_cgeonline._scrape_cgeonline_dates_page()
+
+    assert isinstance(scraped_row, dict)
+
+    assert scraped_row["servicio"] == "Registro Civil-Nacimientos"
+    assert scraped_row["ultima_apertura"] == "10/11/2022"
+    assert scraped_row["proxima_apertura"] == "12/12/2022"
+    assert isinstance(scraped_row["solicitud"], str)
+    assert scraped_row["solicitud"].startswith("/")
+    assert scraped_row["solicitud"].endswith(".html")
