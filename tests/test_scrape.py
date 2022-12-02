@@ -37,3 +37,35 @@ def test_scrape_no_changes(mocker: MockerFixture):
     scrape_cgeonline.scrape(email_every_time=True)
 
     assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+
+
+def test_scrape_error(mocker: MockerFixture):
+    """Test the scrape function when error."""
+    mock_get_response = mocker.Mock(return_value=MockGetResponse("error"))
+    mocker.patch("requests.get", mock_get_response)
+
+    mock_gmail = MockGmail(expected_subject="Error scraping cgeonline")
+    mocker.patch(
+        "src.scrape_cgeonline.gmail_create_and_send_draft",
+        mock_gmail.mock_gmail_create_and_send_draft,
+    )
+
+    scrape_cgeonline.scrape(email_every_time=True)
+
+    assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+
+
+def test_scrape_new_date(mocker: MockerFixture):
+    """Test the scrape function when new date."""
+    mock_get_response = mocker.Mock(return_value=MockGetResponse("new_date"))
+    mocker.patch("requests.get", mock_get_response)
+
+    mock_gmail = MockGmail(expected_subject="New date in cgeonline!")
+    mocker.patch(
+        "src.scrape_cgeonline.gmail_create_and_send_draft",
+        mock_gmail.mock_gmail_create_and_send_draft,
+    )
+
+    scrape_cgeonline.scrape(email_every_time=True)
+
+    assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
