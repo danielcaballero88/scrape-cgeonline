@@ -18,7 +18,7 @@ def test_scrape_cgeonline_dates_page_no_changes(mocker: MockerFixture):
     assert isinstance(scraped_row, dict)
 
     assert scraped_row["servicio"] == "Registro Civil-Nacimientos"
-    assert scraped_row["ultima_apertura"] == "10/11/2022"
+    assert scraped_row["ultima_apertura"] == "01/12/2022"
     assert scraped_row["proxima_apertura"] == "fecha por confirmar"
     assert isinstance(scraped_row["solicitud"], str)
     assert scraped_row["solicitud"].startswith("/")
@@ -44,8 +44,8 @@ def test_scrape_cgeonline_dates_page_new_date(mocker: MockerFixture):
     assert isinstance(scraped_row, dict)
 
     assert scraped_row["servicio"] == "Registro Civil-Nacimientos"
-    assert scraped_row["ultima_apertura"] == "10/11/2022"
-    assert scraped_row["proxima_apertura"] == "12/12/2022"
+    assert scraped_row["ultima_apertura"] == "01/12/2022"
+    assert scraped_row["proxima_apertura"] == "01/01/2023"
     assert isinstance(scraped_row["solicitud"], str)
     assert scraped_row["solicitud"].startswith("/")
     assert scraped_row["solicitud"].endswith(".html")

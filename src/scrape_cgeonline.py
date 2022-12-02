@@ -1,6 +1,7 @@
 """Python module to scrape cgeonline."""
 import logging
 import os
+import re
 
 import requests
 from bs4 import BeautifulSoup
@@ -66,8 +67,14 @@ def _scrape_cgeonline_dates_page():
     cells = row.find_all("td")
     if (
         not cells
-        or cells[0].text != "Registro Civil-Nacimientos"
-        or cells[1].text != "10/11/2022"
+        or not re.search(
+            re.compile(pattern="registro civil.*nacimiento", flags=re.IGNORECASE),
+            cells[0].text,
+        )
+        or not re.search(
+            re.compile(pattern=r"1\s?/\s?12\s?/\s?(20)?22"),
+            cells[1].text,
+        )
     ):
         # Some discrepancy between the expected information in the row
         # and the actual information scraped.
@@ -97,7 +104,10 @@ def scrape(email_every_time: bool):
     else:
         logger.info(row_data)
 
-        if row_data["proxima_apertura"] == "fecha por confirmar":
+        if re.search(
+            re.compile(r"fecha\s?por\s?confirmar", flags=re.IGNORECASE),
+            row_data["proxima_apertura"],
+        ):
             logger.info("No new date: %s", row_data)
             if email_every_time:
                 gmail_create_and_send_draft(
