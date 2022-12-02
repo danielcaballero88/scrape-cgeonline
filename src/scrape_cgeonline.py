@@ -100,7 +100,7 @@ def scrape(email_every_time: bool):
         logger.info(row_data)
 
         if row_data["proxima_apertura"] == "fecha por confirmar":
-            logger.info("No new date: %s")
+            logger.info("No new date: %s", row_data)
             if email_every_time:
                 gmail_create_and_send_draft(
                     subject="No new date in cgeonline.",
