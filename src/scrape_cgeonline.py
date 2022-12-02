@@ -1,7 +1,6 @@
 """Python module to scrape cgeonline."""
 import logging
 import os
-import sys
 
 import requests
 from bs4 import BeautifulSoup
@@ -95,7 +94,6 @@ def scrape(email_every_time: bool):
             subject="Error scraping cgeonline",
             content=str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
-        sys.exit(1)
     else:
         logger.info(row_data)
 
