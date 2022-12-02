@@ -7,12 +7,13 @@ BASE_PATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 # Delete the current script and requirements files
 echo "Deleting remote files."
 REMOTE_PATH="/home/dancab/scripts/scrape-cgeonline"
+FILES="requirements.txt src secrets main.py"
 gcloud compute ssh --zone "us-central1-a" "dc-free-vm"  --project "dc-2022-369305" \
---command="cd $REMOTE_PATH && rm -rf requirements.txt src main.py"
+--command="cd $REMOTE_PATH && rm -rf $FILES"
 
 # Send the current files
 echo "Sending new files."
-tar cf temp/temp.tar requirements.txt src main.py
+tar cf temp/temp.tar $FILES
 
 gcloud compute scp --zone "us-central1-a" --project "dc-2022-369305" \
 --recurse "$BASE_PATH/temp/temp.tar" "dc-free-vm:$REMOTE_PATH/"
