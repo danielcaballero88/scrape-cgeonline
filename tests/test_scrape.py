@@ -24,6 +24,23 @@ class MockGmail:
             assert content == self.expected_content
 
 
+class MockTelegramBot:
+    """Mock the telegram api class for tests purposes."""
+
+    def __init__(self, expected_message=None):
+        self.token = "asd"
+        self.chat_id = "123"
+        self.expected_message = expected_message
+        self.mock_send_telegram_message_times_called = 0
+
+    def send_telegram_message(self, message):
+        """Mock the method to send a telegram message."""
+        self.mock_send_telegram_message_times_called += 1
+
+        if self.expected_message:
+            assert message == self.expected_message
+
+
 def test_scrape_no_changes(mocker: MockerFixture):
     """Test the scrape function when no changes."""
     mock_get_response = mocker.Mock(return_value=MockGetResponse("no_changes"))
@@ -34,9 +51,14 @@ def test_scrape_no_changes(mocker: MockerFixture):
         "src.scrape_cgeonline.gmail_create_and_send_draft",
         mock_gmail.mock_gmail_create_and_send_draft,
     )
+
+    mock_telegram_bot = MockTelegramBot()
+    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+
     scrape_cgeonline.scrape(email_every_time=True)
 
     assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
 def test_scrape_error(mocker: MockerFixture):
@@ -50,9 +72,13 @@ def test_scrape_error(mocker: MockerFixture):
         mock_gmail.mock_gmail_create_and_send_draft,
     )
 
+    mock_telegram_bot = MockTelegramBot()
+    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+
     scrape_cgeonline.scrape(email_every_time=True)
 
     assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
 def test_scrape_new_date(mocker: MockerFixture):
@@ -66,6 +92,10 @@ def test_scrape_new_date(mocker: MockerFixture):
         mock_gmail.mock_gmail_create_and_send_draft,
     )
 
+    mock_telegram_bot = MockTelegramBot()
+    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+
     scrape_cgeonline.scrape(email_every_time=True)
 
     assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
