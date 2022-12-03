@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from dc_logging import get_logger
 
 from src.gmail_api_helper import gmail_create_and_send_draft
+from src.telegram_api_helper import TelegramBot
 
 HERE = os.path.dirname(__file__)
 BASE_DIR = os.path.dirname(HERE)
@@ -30,6 +31,10 @@ root_logger = get_logger(
 # here is not duplicated by the root logger (propagate = False).
 logger = get_logger({"name": "scraper", "file_name": LOGFILE})
 logger.propagate = False
+
+# Telegram bot object.
+config_file = os.path.join(BASE_DIR, "secrets", "telegram.json")
+telegram_bot = TelegramBot(config_file=config_file)
 
 
 def _scrape_cgeonline_dates_page():
@@ -91,18 +96,24 @@ def _scrape_cgeonline_dates_page():
     return result
 
 
+def send_notification(subject, content):
+    """Send notification to all the channels."""
+    gmail_create_and_send_draft(subject=subject, content=content)
+    telegram_bot.send_telegram_message(f"{subject}\n\n{content}")
+
+
 def scrape(email_every_time: bool):
     """Main function to scrape cgeonline"""
     try:
         row_data = _scrape_cgeonline_dates_page()
     except Exception as exc:
-        logger.error(exc)
-        gmail_create_and_send_draft(
+        logger.error("Error while scraping cgeonline: %s", exc)
+        send_notification(
             subject="Error scraping cgeonline",
             content=str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
     else:
-        logger.info(row_data)
+        logger.debug("Scraped data from the target row: %s", row_data)
 
         if re.search(
             re.compile(r"fecha\s?por\s?confirmar", flags=re.IGNORECASE),
@@ -110,13 +121,13 @@ def scrape(email_every_time: bool):
         ):
             logger.info("No new date: %s", row_data)
             if email_every_time:
-                gmail_create_and_send_draft(
+                send_notification(
                     subject="No new date in cgeonline.",
                     content=str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
                 )
         else:
             logger.info("New info: %s", row_data)
-            gmail_create_and_send_draft(
+            send_notification(
                 subject="New date in cgeonline!",
                 content=str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
             )
