@@ -21,16 +21,22 @@ DATES_URL = "/informacion/apertura-de-citas.html"
 # the hierarchy. Useful to catch 3rd party libraries warnings and error
 # logs.
 root_logger = get_logger(
-    {
-        "file_name": LOGFILE,
-        "level": logging.WARNING,
-    }
+    level=logging.WARNING,
+    file_output=True,
+    file_name=LOGFILE,
 )
 
-# The scraper logger is set up independently so any logging is done
+# The scraper logger is the main logger (top parent) of the scraper up,
+# it's set up independently from the root logger so any logging done
 # here is not duplicated by the root logger (propagate = False).
-logger = get_logger({"name": "scraper", "file_name": LOGFILE})
-logger.propagate = False
+logger = get_logger(
+    name="scraper",
+    level=logging.DEBUG,
+    file_name=LOGFILE,
+    file_output=True,
+    file_level=logging.DEBUG,
+    propagate=False,
+)
 
 # Telegram bot object.
 config_file = os.path.join(BASE_DIR, "secrets", "telegram.json")
