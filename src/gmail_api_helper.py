@@ -1,70 +1,31 @@
 """Helper module for the GMAIL API functions."""
-import base64
+import json
 import os
+import smtplib
 from email.message import EmailMessage
-
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 HERE = os.path.dirname(__file__)
 BASE_DIR = os.path.dirname(HERE)
-TOKEN_FILE = os.path.join(BASE_DIR, "secrets", "token.json")
-CREDENTIALS_FILE = os.path.join(BASE_DIR, "secrets", "credentials.json")
-
-# https://developers.google.com/gmail/api/auth/scopes
-SCOPES = [
-    # "https://www.googleapis.com/auth/gmail.readonly",
-    "https://www.googleapis.com/auth/gmail.compose",
-]
+SECRETS_FILE = os.path.join(BASE_DIR, "secrets", "gmail.json")
 
 
-def gmail_create_and_send_draft(subject, content):
-    """Create a gmail draft and send it."""
-    # Authentication
-    creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open(TOKEN_FILE, "w", encoding="utf-8") as token:
-            token.write(creds.to_json())
+def send_gmail(subject, content):
+    """Send an email using gmail."""
+    # Get account secrets: address and password.
+    with open(SECRETS_FILE, "r", encoding="utf-8") as gmail_secrets_file:
+        gmail_secrets = json.load(gmail_secrets_file)
+        gmail_account = gmail_secrets["account"]
+        gmail_password = gmail_secrets["password"]
 
-    # Create and send draft.
-    try:
-        # create gmail api client
-        service = build("gmail", "v1", credentials=creds)
+    # Create email message.
+    message = EmailMessage()
 
-        message = EmailMessage()
+    message["To"] = "danielcaballero88@gmail.com"
+    message["From"] = "danielcaballero88@gmail.com"
+    message["Subject"] = subject
+    message.set_content(content)
 
-        message["To"] = "danielcaballero88@gmail.com"
-        message["From"] = "danielcaballero88@gmail.com"
-        message["Subject"] = subject
-        message.set_content(content)
-
-        # encoded message
-        encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
-
-        create_message = {"message": {"raw": encoded_message}}
-        # pylint: disable=E1101
-        draft = (
-            service.users().drafts().create(userId="me", body=create_message).execute()
-        )
-
-        print(f'Draft id: {draft["id"]}\nDraft message: {draft["message"]}')
-
-        service.users().drafts().send(userId="me", body={"id": draft["id"]}).execute()
-
-    except HttpError as error:
-        print(f"An error occurred: {error}")
-        draft = None
-
-    return draft
+    # Send email.
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(gmail_account, gmail_password)
+        smtp.send_message(message)

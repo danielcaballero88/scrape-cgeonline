@@ -1,4 +1,5 @@
 """Python module to scrape cgeonline."""
+import datetime as dt
 import logging
 import os
 import re
@@ -7,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from dc_logging import get_logger
 
-from src.gmail_api_helper import gmail_create_and_send_draft
+from src.gmail_api_helper import send_gmail
 from src.logging_utils import exc_to_str
 from src.telegram_api_helper import TelegramBot
 
@@ -17,6 +18,8 @@ LOGFILE = os.path.join(BASE_DIR, "log", "scrape_cgeonline.log")
 
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
 DATES_URL = "/informacion/apertura-de-citas.html"
+
+NOW = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 # Root logger defines the file and level for any log propagating up
 # the hierarchy. Useful to catch 3rd party libraries warnings and error
@@ -111,7 +114,7 @@ def send_notification(subject, content):
         content,
     )
     try:
-        gmail_create_and_send_draft(subject=subject, content=content)
+        send_gmail(subject=subject, content=content)
     except Exception as exc:
         logger.error("Error trying to send gmail notification: %s", exc)
         logger.debug("Traceback: %s", exc_to_str(exc))
@@ -131,7 +134,7 @@ def scrape(email_every_time: bool):
         logger.error("Error while scraping cgeonline: %s", exc)
         send_notification(
             subject="Error scraping cgeonline",
-            content=str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
+            content=NOW + "\n\n" + str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
     else:
         logger.debug("Scraped data from the target row: %s", row_data)
@@ -144,11 +147,21 @@ def scrape(email_every_time: bool):
             if email_every_time:
                 send_notification(
                     subject="No new date in cgeonline.",
-                    content=str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
+                    content=NOW
+                    + "\n\n"
+                    + str(row_data)
+                    + "\n\n"
+                    + CGEONLINE_URL
+                    + DATES_URL,
                 )
         else:
             logger.info("New info: %s", row_data)
             send_notification(
                 subject="New date in cgeonline!",
-                content=str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
+                content=NOW
+                + "\n\n"
+                + str(row_data)
+                + "\n\n"
+                + CGEONLINE_URL
+                + DATES_URL,
             )

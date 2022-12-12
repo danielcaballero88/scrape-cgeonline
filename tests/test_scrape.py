@@ -12,11 +12,11 @@ class MockGmail:
     def __init__(self, expected_subject=None, expected_content=None):
         self.expected_subject = expected_subject
         self.expected_content = expected_content
-        self.mock_gmail_create_and_send_draft_times_called = 0
+        self.mock_send_gmail_times_called = 0
 
-    def mock_gmail_create_and_send_draft(self, subject, content):
+    def mock_send_gmail(self, subject, content):
         """Mock the method to send an email."""
-        self.mock_gmail_create_and_send_draft_times_called += 1
+        self.mock_send_gmail_times_called += 1
 
         if self.expected_subject:
             assert subject == self.expected_subject
@@ -48,8 +48,8 @@ def test_scrape_no_changes(mocker: MockerFixture):
 
     mock_gmail = MockGmail(expected_subject="No new date in cgeonline.")
     mocker.patch(
-        "src.scrape_cgeonline.gmail_create_and_send_draft",
-        mock_gmail.mock_gmail_create_and_send_draft,
+        "src.scrape_cgeonline.send_gmail",
+        mock_gmail.mock_send_gmail,
     )
 
     mock_telegram_bot = MockTelegramBot()
@@ -57,7 +57,7 @@ def test_scrape_no_changes(mocker: MockerFixture):
 
     scrape_cgeonline.scrape(email_every_time=True)
 
-    assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
@@ -68,8 +68,8 @@ def test_scrape_error(mocker: MockerFixture):
 
     mock_gmail = MockGmail(expected_subject="Error scraping cgeonline")
     mocker.patch(
-        "src.scrape_cgeonline.gmail_create_and_send_draft",
-        mock_gmail.mock_gmail_create_and_send_draft,
+        "src.scrape_cgeonline.send_gmail",
+        mock_gmail.mock_send_gmail,
     )
 
     mock_telegram_bot = MockTelegramBot()
@@ -77,7 +77,7 @@ def test_scrape_error(mocker: MockerFixture):
 
     scrape_cgeonline.scrape(email_every_time=True)
 
-    assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
@@ -88,8 +88,8 @@ def test_scrape_new_date(mocker: MockerFixture):
 
     mock_gmail = MockGmail(expected_subject="New date in cgeonline!")
     mocker.patch(
-        "src.scrape_cgeonline.gmail_create_and_send_draft",
-        mock_gmail.mock_gmail_create_and_send_draft,
+        "src.scrape_cgeonline.send_gmail",
+        mock_gmail.mock_send_gmail,
     )
 
     mock_telegram_bot = MockTelegramBot()
@@ -97,5 +97,5 @@ def test_scrape_new_date(mocker: MockerFixture):
 
     scrape_cgeonline.scrape(email_every_time=True)
 
-    assert mock_gmail.mock_gmail_create_and_send_draft_times_called == 1
+    assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
