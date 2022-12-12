@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from dc_logging import get_logger
 
 from src.gmail_api_helper import gmail_create_and_send_draft
+from src.logging_utils import exc_to_str
 from src.telegram_api_helper import TelegramBot
 
 HERE = os.path.dirname(__file__)
@@ -104,8 +105,22 @@ def _scrape_cgeonline_dates_page():
 
 def send_notification(subject, content):
     """Send notification to all the channels."""
-    gmail_create_and_send_draft(subject=subject, content=content)
-    telegram_bot.send_telegram_message(f"{subject}\n\n{content}")
+    logger.info(
+        "Attempting to send notifications with subject=%s and content=%s",
+        subject,
+        content,
+    )
+    try:
+        gmail_create_and_send_draft(subject=subject, content=content)
+    except Exception as exc:
+        logger.error("Error trying to send gmail notification: %s", exc)
+        logger.debug("Traceback: %s", exc_to_str(exc))
+
+    try:
+        telegram_bot.send_telegram_message(f"{subject}\n\n{content}")
+    except Exception as exc:
+        logger.error("Error trying to send telegram notification: %s", exc)
+        logger.debug("Traceback: %s", exc_to_str(exc))
 
 
 def scrape(email_every_time: bool):
