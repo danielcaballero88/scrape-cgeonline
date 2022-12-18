@@ -43,8 +43,7 @@ logger = get_logger(
 )
 
 # Telegram bot object.
-config_file = os.path.join(BASE_DIR, "secrets", "telegram.json")
-telegram_bot = TelegramBot(config_file=config_file)
+telegram_bot = TelegramBot()
 
 
 def _scrape_cgeonline_dates_page():

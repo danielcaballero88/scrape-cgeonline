@@ -3,6 +3,8 @@ import json
 
 import requests
 
+from src.settings import telegram_chat_id, telegram_token
+
 
 class TelegramBot:
     """A Telegram bot in a single chat.
@@ -12,17 +14,6 @@ class TelegramBot:
     linked to this single chat (at least currently).
     """
 
-    def __init__(self, config_file: str):
-        self.token, self.chat_id = self.get_telegram_conf(config_file)
-
-    def get_telegram_conf(self, config_file: str):
-        """Read bot configuration from a secret file."""
-        with open(file=config_file, mode="r", encoding="utf-8") as telegram_conf_file:
-            telegram_data = json.load(telegram_conf_file)
-        telegram_token = telegram_data["token"]
-        telegram_chat_id = telegram_data["chat_id"]
-        return telegram_token, telegram_chat_id
-
     def send_telegram_message(self, message: str) -> requests.Response:
         """Send a message to the chat in the config."""
         headers = {
@@ -30,13 +21,13 @@ class TelegramBot:
             "Proxy-Authorization": "Basic base64",
         }
         data_dict = {
-            "chat_id": self.chat_id,
+            "chat_id": telegram_chat_id,
             "text": message,
             "parse_mode": "HTML",
             "disable_notification": True,
         }
         data = json.dumps(data_dict)
-        url = f"https://api.telegram.org/bot{self.token}/sendMessage"
+        url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
 
         response = requests.post(
             url, data=data, headers=headers, verify=False, timeout=10
