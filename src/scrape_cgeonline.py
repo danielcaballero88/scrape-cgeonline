@@ -125,8 +125,19 @@ def send_notification(subject, content):
         logger.debug("Traceback: %s", exc_to_str(exc))
 
 
-def scrape(email_every_time: bool):
+def scrape(email_every_time: bool = False, verbose: bool = False):
     """Main function to scrape cgeonline"""
+    if verbose:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s : %(name)-12s : %(funcName)-12s : %(levelname)-12s :: "
+                "%(message)s"
+            )
+        )
+        logger.addHandler(console_handler)
+
     try:
         row_data = _scrape_cgeonline_dates_page()
     except Exception as exc:
