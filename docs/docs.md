@@ -1,8 +1,29 @@
-# Python Scraper for the CGE Website.
+# 1. Python Scraper for the CGE Website.
 
 CGE = Consulado General de España
 
-## Introduction
+- [1. Python Scraper for the CGE Website.](#1-python-scraper-for-the-cge-website)
+  - [1.1. Introduction](#11-introduction)
+  - [1.2. Simple Scraping](#12-simple-scraping)
+  - [1.3. GMail Notifications](#13-gmail-notifications)
+    - [1.3.1. Set up the GMail API](#131-set-up-the-gmail-api)
+      - [1.3.1.1. GMail API Authentication](#1311-gmail-api-authentication)
+      - [1.3.1.2. GMail API - Send an email](#1312-gmail-api---send-an-email)
+      - [1.3.1.3. GMail API - Set up Notifications](#1313-gmail-api---set-up-notifications)
+    - [1.3.2. Use a Password App](#132-use-a-password-app)
+  - [1.4. Telegram Notifications](#14-telegram-notifications)
+    - [1.4.1. Create a Telegram bot](#141-create-a-telegram-bot)
+    - [1.4.2. Implement the notifications](#142-implement-the-notifications)
+  - [1.5. Deploy](#15-deploy)
+    - [1.5.1. Set up Billing](#151-set-up-billing)
+    - [1.5.2. Spin up a VM](#152-spin-up-a-vm)
+    - [1.5.3. Connect to the VM](#153-connect-to-the-vm)
+    - [1.5.4. Copy the code](#154-copy-the-code)
+    - [1.5.5. Set up the VM](#155-set-up-the-vm)
+    - [1.5.6. Set up a cronjob](#156-set-up-a-cronjob)
+
+
+## 1.1. Introduction
 
 The website contains information about an incoming date for booking an appointment to initiate some paperwork.
 
@@ -18,7 +39,7 @@ way of it on a first read (e.g., file path resolution, error handling, logging, 
 
 [github-repo]: https://github.com/danielcaballero88/scrape-cgeonline
 
-## Simple Scraping
+## 1.2. Simple Scraping
 
 Both the website and the objective are simple enough.
 
@@ -58,9 +79,9 @@ result = {
 That's it, now we have the information. Most tutorials I've found online for simple scrapers end here, but this is still
 completely useless (like those tutorials) unless we actually do something with that data.
 
-## GMail Notifications
+## 1.3. GMail Notifications
 
-### Set up the GMail API
+### 1.3.1. Set up the GMail API
 
 **NOTE: This solution is now replaced by a better one, check the section "Use a Password App" to see the better solution. The issue with the GMail API is that it is intended for web apps where the users provide permissions to the app using OAuth2, but those permissions don't last undefinitely, and thus need to be renewed periodically. What we want is to send emails programatically, so the app needs to be able to authenticate undefinitely.**
 
@@ -101,7 +122,7 @@ credentials for:
 For our case scenario, however, this is perfect, because we only want to send notification emails from a single GMail
 account (whatever that account is). So just add that account as a test user account, and that's it.
 
-#### GMail API Authentication
+#### 1.3.1.1. GMail API Authentication
 
 Now that we have the credentials, which will be valid for that single test user account, we can set up the
 notifications.
@@ -146,7 +167,7 @@ mode, but we know that already, so just go ahead and allow access... it's your o
 
 [gmail-api-scopes]:https://developers.google.com/gmail/api/auth/scopes
 
-#### GMail API - Send an email
+#### 1.3.1.2. GMail API - Send an email
 
 We'll create a draft and send it, using the `creds` obtained in the previous section:
 
@@ -182,7 +203,7 @@ email address, or a list of addresses, that will receive the notifications.
 
 And that's it for sending a notification via email!
 
-#### GMail API - Set up Notifications
+#### 1.3.1.3. GMail API - Set up Notifications
 
 To set up the notifications we just need to put the previous snippets together, and in the case that there is new
 data for the next opening ("proxima apertura" since the website is in spanish), then send the notification.
@@ -201,7 +222,7 @@ Note that the condition, as it is, it's a bit rigid, so it's better to replace i
 variations of the same data.
 To see how that is implemented simply check out the code in the [Github repo][github-repo].
 
-### Use a Password App
+### 1.3.2. Use a Password App
 
 To send notifications using GMail we need, naturally, a Google account.
 I think that the best approach is to create a new account to send these emails, to avoid using one's personal Google account in case there is a security breach and someone gets access to the password app we'll create.
@@ -250,7 +271,7 @@ with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
 
 [google-app-password]: https://support.google.com/accounts/answer/185833?hl=en
 
-## Telegram Notifications
+## 1.4. Telegram Notifications
 
 Although we already have GMail notifications, and that is good enough already, it's good to have some redundancy in
 notifications because one of the notifications systems might fail.
@@ -265,7 +286,7 @@ Nonetheless, here I'll put a summary of the steps I followed.
 
 [telegram-bot-guide]: https://core.telegram.org/bots/tutorial
 
-### Create a Telegram bot
+### 1.4.1. Create a Telegram bot
 
 Simply look for the `@BotFather` in the Telegram messaging app, and ask to create a new bot by sending a `/newbot`
 message to it.
@@ -299,7 +320,7 @@ where `<chat_id>` is a positive or negative number.
 
 Copy that number and save it too.
 
-### Implement the notifications
+### 1.4.2. Implement the notifications
 
 First of all, let's create a configuration file for our telegram bot(e.g., `telegram.json`) and make that accessible to
 our application:
@@ -343,7 +364,7 @@ response = requests.post(
 
 Now we can add these notifications in parallel with the GMail notifications.
 
-## Deploy
+## 1.5. Deploy
 
 OK so now the code is really useful, but it's still doing nothing because it only runs when we execute it, which is not
 really helpful since we're doing so manually, and it's only slightly better than just going manually to the website and
@@ -376,7 +397,7 @@ More on this in the next section.
 
 [gcp-free-tier]: https://cloud.google.com/free/
 
-### Set up Billing
+### 1.5.1. Set up Billing
 
 Again: we'll set up a billing account because it's a requiste to use some GCP services (like Compute Engine), but we'll
 remain within the free tier limits so we won't be charged.
@@ -419,7 +440,7 @@ To assign the billing account to it, click on the 3 dots, and click on Change Bi
 And that's it!
 We can now enable services that require Billing to be active, like Compute Engine.
 
-### Spin up a VM
+### 1.5.2. Spin up a VM
 
 The GCP free tier specifications for Compute Engine might be changed by Google eventually, so by all means do check them
 out in the [official docs][gcp-free-tier-compute-engine].
@@ -443,7 +464,7 @@ picture above, blurred).
 
 [gcp-free-tier-compute-engine]: https://cloud.google.com/free/docs/free-cloud-features#compute
 
-### Connect to the VM
+### 1.5.3. Connect to the VM
 
 Then we'll need to be able to connect to this VM via SSH, so we can set up our application to run there.
 To get the gcloud command, click on the 3 dots and then on "View gcloud command".
@@ -466,7 +487,7 @@ This means that we can connect to the VM and copy over our code and set up a cro
 for us.
 More on this in the next subsections.
 
-### Copy the code
+### 1.5.4. Copy the code
 
 Let's assume we have our application contained in the directory `/path/to/local/app` in our local machine, and we want
 to put it in the directory `/path/to/remote/app` in the VM.
@@ -493,7 +514,7 @@ And done!
 We now have our code in the VM.
 However, it cannot yet be executed since we still haven't installed Python and our app requirements with pip.
 
-### Set up the VM
+### 1.5.5. Set up the VM
 
 To be able to execute our application in the VM, we need to install Python and the requirements (requests, Beautiful
 Soup, and the GMail API libraries).
@@ -529,7 +550,7 @@ $ python script.py
 And done, if it runs it means that evevrything is ready codewise, we just need to set up a cronjob so the script runs
 every hour.
 
-### Set up a cronjob
+### 1.5.6. Set up a cronjob
 
 We'll set up a cronjob, which is quite easy to do with:
 
