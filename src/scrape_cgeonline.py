@@ -1,8 +1,10 @@
 """Python module to scrape cgeonline."""
 import datetime as dt
+import json
 import logging
 import os
 import re
+import sys
 
 import requests
 from bs4 import BeautifulSoup
@@ -15,6 +17,7 @@ from src.telegram_api_helper import TelegramBot
 HERE = os.path.dirname(__file__)
 BASE_DIR = os.path.dirname(HERE)
 LOGFILE = os.path.join(BASE_DIR, "log", "scrape_cgeonline.log")
+LAST_DATA_FILE = os.path.join(BASE_DIR, "log", "last_data.json")
 
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
 DATES_URL = "/informacion/apertura-de-citas.html"
@@ -146,28 +149,25 @@ def scrape(email_every_time: bool = False, verbose: bool = False):
             subject="Error scraping cgeonline",
             content=NOW + "\n\n" + str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
-    else:
-        logger.debug("Scraped data from the target row: %s", row_data)
+        sys.exit(1)
 
-        if re.search(
-            re.compile(r"fecha\s?por\s?confirmar", flags=re.IGNORECASE),
-            row_data["proxima_apertura"],
-        ):
-            logger.info("No new date: %s", row_data)
-            if email_every_time:
-                send_notification(
-                    subject="No new date in cgeonline.",
-                    content=NOW
-                    + "\n\n"
-                    + str(row_data)
-                    + "\n\n"
-                    + CGEONLINE_URL
-                    + DATES_URL,
-                )
-        else:
-            logger.info("New info: %s", row_data)
+    # If here, scraping was successful.
+
+    logger.debug("Scraped data from the target row: %s", row_data)
+
+    if os.path.exists(LAST_DATA_FILE):
+        with open(file=LAST_DATA_FILE, mode="r", encoding="utf-8") as json_file:
+            last_data = json.load(json_file)
+    else:
+        # This would mean a first run if the file doesn't exist, so I just take the
+        # currently scraped data.
+        last_data = row_data
+
+    if row_data == last_data:
+        logger.info("No new date: %s", row_data)
+        if email_every_time:
             send_notification(
-                subject="New date in cgeonline!",
+                subject="No new date in cgeonline.",
                 content=NOW
                 + "\n\n"
                 + str(row_data)
@@ -175,3 +175,17 @@ def scrape(email_every_time: bool = False, verbose: bool = False):
                 + CGEONLINE_URL
                 + DATES_URL,
             )
+    else:
+        logger.info("New info: %s", row_data)
+        send_notification(
+            subject="New date in cgeonline!",
+            content=NOW
+            + "\n\n"
+            + str(row_data)
+            + "\n\n"
+            + CGEONLINE_URL
+            + DATES_URL,
+        )
+
+    with open(file=LAST_DATA_FILE, mode="w", encoding="utf-8") as json_file:
+        json.dump(row_data, json_file, indent=2)
