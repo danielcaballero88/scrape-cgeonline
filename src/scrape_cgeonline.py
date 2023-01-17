@@ -4,10 +4,10 @@ import json
 import logging
 import os
 import re
-import sys
 
 import requests
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 from dc_logging import get_logger
 
 from src.gmail_api_helper import send_gmail
@@ -70,9 +70,16 @@ def _scrape_cgeonline_dates_page():
     req = requests.get(CGEONLINE_URL + DATES_URL, timeout=10)
     soup = BeautifulSoup(req.text, features="html.parser")
 
-    rows = soup.find_all(
-        lambda x: x.name == "tr" and "Registro Civil-Nacimientos" in x.text
-    )
+    def _match_row_regex(element: Tag) -> bool:
+        if element.name == "tr" and re.search(
+            re.compile(pattern="registro civil.*nacimiento", flags=re.IGNORECASE),
+            element.text,
+        ):
+            return True
+
+        return False
+
+    rows = soup.find_all(_match_row_regex)
 
     if not rows:
         # No rows selected means some error finding the correct row.
@@ -87,10 +94,6 @@ def _scrape_cgeonline_dates_page():
         or not re.search(
             re.compile(pattern="registro civil.*nacimiento", flags=re.IGNORECASE),
             cells[0].text,
-        )
-        or not re.search(
-            re.compile(pattern=r"1\s?/\s?12\s?/\s?(20)?22"),
-            cells[1].text,
         )
     ):
         # Some discrepancy between the expected information in the row
@@ -149,7 +152,7 @@ def scrape(email_every_time: bool = False, verbose: bool = False):
             subject="Error scraping cgeonline",
             content=NOW + "\n\n" + str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
-        sys.exit(1)
+        return(1)
 
     # If here, scraping was successful.
 
