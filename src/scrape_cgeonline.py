@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import re
+import time
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,6 +13,7 @@ from dc_logging import get_logger
 
 from src.gmail_api_helper import send_gmail
 from src.logging_utils import exc_to_str
+from src.scraping_error import ScrapingError
 from src.telegram_api_helper import TelegramBot
 
 HERE = os.path.dirname(__file__)
@@ -62,13 +64,41 @@ def _scrape_cgeonline_dates_page():
             }
 
     Raises:
-        ValueError: If there is any error during the scraping that may
+        ScrapingError: If there is any error during the scraping that may
         mean that the page structure has changed.
     """
     result = {}
 
-    req = requests.get(CGEONLINE_URL + DATES_URL, timeout=10)
-    soup = BeautifulSoup(req.text, features="html.parser")
+    max_retries = 5
+    num_retries = 0
+    while num_retries <= max_retries:
+        resp = requests.get(CGEONLINE_URL + DATES_URL, timeout=10)
+
+        if resp.ok:
+            break
+
+        time.sleep(30)
+        num_retries += 1
+        logger.debug(
+            "Bad response (%s), retrying... %s/%s",
+            resp.status_code,
+            num_retries,
+            max_retries,
+        )
+
+    if resp.status_code == 525:
+        # Special case, I'm getting quite a few of these.
+        raise ScrapingError(
+            f"525 status code (SSL Certificates Error) in {CGEONLINE_URL + DATES_URL}",
+            resp,
+        )
+
+    if not resp.ok:
+        raise ScrapingError(
+            f"Bad response trying to scrape {CGEONLINE_URL + DATES_URL}", resp
+        )
+
+    soup = BeautifulSoup(resp.text, features="html.parser")
 
     def _match_row_regex(element: Tag) -> bool:
         if element.name == "tr" and re.search(
@@ -83,22 +113,20 @@ def _scrape_cgeonline_dates_page():
 
     if not rows:
         # No rows selected means some error finding the correct row.
-        raise ValueError(
-            f"No row for 'Registro Civil-Nacimientos' found in {CGEONLINE_URL + DATES_URL}"
+        raise ScrapingError(
+            f"No row for 'Registro Civil-Nacimientos' found in {CGEONLINE_URL + DATES_URL}",
+            resp,
         )
 
     row = rows[0]
     cells = row.find_all("td")
-    if (
-        not cells
-        or not re.search(
-            re.compile(pattern="registro civil.*nacimiento", flags=re.IGNORECASE),
-            cells[0].text,
-        )
+    if not cells or not re.search(
+        re.compile(pattern="registro civil.*nacimiento", flags=re.IGNORECASE),
+        cells[0].text,
     ):
         # Some discrepancy between the expected information in the row
         # and the actual information scraped.
-        raise ValueError(f"Row data is not as expected: {row}")
+        raise ScrapingError(f"Row data is not as expected: {row}", resp)
 
     # Being here there is no error during scraping.
     result = {
@@ -146,13 +174,27 @@ def scrape(email_every_time: bool = False, verbose: bool = False):
 
     try:
         row_data = _scrape_cgeonline_dates_page()
-    except Exception as exc:
+    except ScrapingError as exc:
         logger.error("Error while scraping cgeonline: %s", exc)
         send_notification(
             subject="Error scraping cgeonline",
+            content=NOW
+            + "\n\n"
+            + str(exc)
+            + "\n\n"
+            + CGEONLINE_URL
+            + DATES_URL
+            + "\n\n"
+            + exc.response,
+        )
+        return 1
+    except Exception as exc:
+        logger.error("Unexpected error while trying to scrape cgeonline: %s", exc)
+        send_notification(
+            subject="Error in cgeonline scraper :(",
             content=NOW + "\n\n" + str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
-        return(1)
+        return 1
 
     # If here, scraping was successful.
 
@@ -182,12 +224,7 @@ def scrape(email_every_time: bool = False, verbose: bool = False):
         logger.info("New info: %s", row_data)
         send_notification(
             subject="New date in cgeonline!",
-            content=NOW
-            + "\n\n"
-            + str(row_data)
-            + "\n\n"
-            + CGEONLINE_URL
-            + DATES_URL,
+            content=NOW + "\n\n" + str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
         )
 
     with open(file=LAST_DATA_FILE, mode="w", encoding="utf-8") as json_file:
