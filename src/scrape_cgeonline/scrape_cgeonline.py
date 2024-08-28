@@ -22,6 +22,7 @@ from .utils.telegram_api_helper import TelegramBot
 HERE = os.path.dirname(__file__)
 BASE_DIR = os.path.dirname(HERE)
 LOGFILE = os.path.join(BASE_DIR, "log", "scrape_cgeonline.log")
+os.makedirs(os.path.join(BASE_DIR, "log"), exist_ok=True)
 LAST_DATA_FILE = os.path.join(BASE_DIR, "log", "last_data.json")
 
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
@@ -50,8 +51,8 @@ class Scraper:
         self.logger = get_logger(
             name="scraper",
             level=logging.DEBUG,
-            # file_name=LOGFILE,
-            # file_output=True,
+            file_name=LOGFILE,
+            file_output=True,
             file_level=logging.DEBUG,
             propagate=False,
         )
