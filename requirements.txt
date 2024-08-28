@@ -1,4 +1,4 @@
-beautifulsoup4~=4.11.1
+beautifulsoup4>=4.11,<5
 dc-logging==0.0.2
-python-dotenv~=0.21.0
-requests~=2.28.1
+python-dotenv
+requests>=2.26,<3

@@ -1,10 +1,10 @@
 .vscode
-/.venv
+.venv
 
 __pycache__
 
-/log
-/secrets
-/temp
+log
+secrets
+temp*
 
 .env

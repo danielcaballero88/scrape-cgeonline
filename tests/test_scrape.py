@@ -2,7 +2,7 @@
 import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
-from src import scrape_cgeonline
+from src.scrape_cgeonline.scrape_cgeonline import Scraper
 from tests.mock_response import MockGetResponse
 
 
@@ -55,7 +55,8 @@ def test_scrape_no_changes(mocker: MockerFixture):
     mock_telegram_bot = MockTelegramBot()
     mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
 
-    scrape_cgeonline.scrape(email_every_time=True)
+    scraper = Scraper(email_every_time=True)
+    scraper.scrape()
 
     assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
@@ -75,7 +76,8 @@ def test_scrape_error(mocker: MockerFixture):
     mock_telegram_bot = MockTelegramBot()
     mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
 
-    scrape_cgeonline.scrape(email_every_time=True)
+    scraper = Scraper(email_every_time=True)
+    scraper.scrape()
 
     assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
@@ -95,7 +97,8 @@ def test_scrape_new_date(mocker: MockerFixture):
     mock_telegram_bot = MockTelegramBot()
     mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
 
-    scrape_cgeonline.scrape(email_every_time=True)
+    scraper = Scraper(email_every_time=True)
+    scraper.scrape()
 
     assert mock_gmail.mock_send_gmail_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1

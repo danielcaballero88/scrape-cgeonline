@@ -2,7 +2,7 @@
 import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
-from src import scrape_cgeonline
+from src.scrape_cgeonline.scrape_cgeonline import Scraper
 from tests.mock_response import MockGetResponse
 
 # pylint: disable=protected-access
@@ -13,7 +13,8 @@ def test_scrape_cgeonline_dates_page_no_changes(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("no_changes"))
     mocker.patch("requests.get", mock_get_response)
 
-    scraped_row = scrape_cgeonline._scrape_cgeonline_dates_page()
+    scraper = Scraper()
+    scraped_row = scraper._scrape_cgeonline_dates_page()
 
     assert isinstance(scraped_row, dict)
 
@@ -30,8 +31,10 @@ def test_scrape_cgeonline_dates_page_error(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("error"))
     mocker.patch("requests.get", mock_get_response)
 
+    scraper = Scraper()
+
     with pytest.raises(ValueError):
-        scrape_cgeonline._scrape_cgeonline_dates_page()
+        scraper._scrape_cgeonline_dates_page()
 
 
 def test_scrape_cgeonline_dates_page_new_date(mocker: MockerFixture):
@@ -39,7 +42,8 @@ def test_scrape_cgeonline_dates_page_new_date(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("new_date"))
     mocker.patch("requests.get", mock_get_response)
 
-    scraped_row = scrape_cgeonline._scrape_cgeonline_dates_page()
+    scraper = Scraper()
+    scraped_row = scraper._scrape_cgeonline_dates_page()
 
     assert isinstance(scraped_row, dict)
 
