@@ -50,8 +50,8 @@ class Scraper:
         self.logger = get_logger(
             name="scraper",
             level=logging.DEBUG,
-            file_name=LOGFILE,
-            file_output=True,
+            # file_name=LOGFILE,
+            # file_output=True,
             file_level=logging.DEBUG,
             propagate=False,
         )
@@ -173,7 +173,7 @@ class Scraper:
             content,
         )
         try:
-            GmailApiHelper.send_gmail(subject=subject, content=content)
+            GmailApiHelper.send_email(subject=subject, content=content)
         except Exception as exc:
             self.logger.error("Error trying to send gmail notification: %s", exc)
             self.logger.debug("Traceback: %s", exc_to_str(exc))

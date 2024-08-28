@@ -1,22 +1,25 @@
 """Test module for the main function 'scrape'."""
+
 import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
 from src.scrape_cgeonline.scrape_cgeonline import Scraper
+from src.scrape_cgeonline.utils.gmail_api_helper import GmailApiHelper
+from src.scrape_cgeonline.utils.telegram_api_helper import TelegramBot
 from tests.mock_response import MockGetResponse
 
 
-class MockGmail:
+class MockGmailApiHelper:
     """Mock the gmail api for tests purposes."""
 
     def __init__(self, expected_subject=None, expected_content=None):
         self.expected_subject = expected_subject
         self.expected_content = expected_content
-        self.mock_send_gmail_times_called = 0
+        self.mock_send_email_times_called = 0
 
-    def mock_send_gmail(self, subject, content):
+    def send_email(self, subject, content):
         """Mock the method to send an email."""
-        self.mock_send_gmail_times_called += 1
+        self.mock_send_email_times_called += 1
 
         if self.expected_subject:
             assert subject == self.expected_subject
@@ -46,19 +49,18 @@ def test_scrape_no_changes(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("no_changes"))
     mocker.patch("requests.get", mock_get_response)
 
-    mock_gmail = MockGmail(expected_subject="No new date in cgeonline.")
-    mocker.patch(
-        "src.scrape_cgeonline.send_gmail",
-        mock_gmail.mock_send_gmail,
-    )
+    mock_gmail = MockGmailApiHelper(expected_subject="No new date in cgeonline.")
+    mocker.patch.object(GmailApiHelper, "send_email", mock_gmail.send_email)
 
     mock_telegram_bot = MockTelegramBot()
-    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+    mocker.patch.object(
+        TelegramBot, "send_telegram_message", mock_telegram_bot.send_telegram_message
+    )
 
     scraper = Scraper(email_every_time=True)
     scraper.scrape()
 
-    assert mock_gmail.mock_send_gmail_times_called == 1
+    assert mock_gmail.mock_send_email_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
@@ -67,19 +69,18 @@ def test_scrape_error(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("error"))
     mocker.patch("requests.get", mock_get_response)
 
-    mock_gmail = MockGmail(expected_subject="Error scraping cgeonline")
-    mocker.patch(
-        "src.scrape_cgeonline.send_gmail",
-        mock_gmail.mock_send_gmail,
-    )
+    mock_gmail = MockGmailApiHelper(expected_subject="Error scraping cgeonline")
+    mocker.patch.object(GmailApiHelper, "send_email", mock_gmail.send_email)
 
     mock_telegram_bot = MockTelegramBot()
-    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+    mocker.patch.object(
+        TelegramBot, "send_telegram_message", mock_telegram_bot.send_telegram_message
+    )
 
     scraper = Scraper(email_every_time=True)
     scraper.scrape()
 
-    assert mock_gmail.mock_send_gmail_times_called == 1
+    assert mock_gmail.mock_send_email_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
 
 
@@ -88,17 +89,16 @@ def test_scrape_new_date(mocker: MockerFixture):
     mock_get_response = mocker.Mock(return_value=MockGetResponse("new_date"))
     mocker.patch("requests.get", mock_get_response)
 
-    mock_gmail = MockGmail(expected_subject="New date in cgeonline!")
-    mocker.patch(
-        "src.scrape_cgeonline.send_gmail",
-        mock_gmail.mock_send_gmail,
-    )
+    mock_gmail = MockGmailApiHelper(expected_subject="New date in cgeonline!")
+    mocker.patch.object(GmailApiHelper, "send_email", mock_gmail.send_email)
 
     mock_telegram_bot = MockTelegramBot()
-    mocker.patch("src.scrape_cgeonline.telegram_bot", mock_telegram_bot)
+    mocker.patch.object(
+        TelegramBot, "send_telegram_message", mock_telegram_bot.send_telegram_message
+    )
 
     scraper = Scraper(email_every_time=True)
     scraper.scrape()
 
-    assert mock_gmail.mock_send_gmail_times_called == 1
+    assert mock_gmail.mock_send_email_times_called == 1
     assert mock_telegram_bot.mock_send_telegram_message_times_called == 1
