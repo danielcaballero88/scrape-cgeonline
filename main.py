@@ -1,7 +1,7 @@
 """Entry point script to scrape cgeonline."""
 import argparse
 
-from src.scrape_cgeonline import scrape
+from src.scrape_cgeonline.scrape_cgeonline import Scraper
 
 
 def _parse_arguments():
@@ -26,4 +26,5 @@ def _parse_arguments():
 
 if __name__ == "__main__":
     args = _parse_arguments()
-    scrape(email_every_time=args.email_every_time, verbose=args.verbose)
+    scraper = Scraper(email_every_time=args.email_every_time, verbose=args.verbose)
+    scraper.scrape()

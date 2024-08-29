@@ -10,11 +10,10 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from dc_logging import get_logger
 
 from .config import Config
 from .utils.gmail_api_helper import GmailApiHelper
-from .utils.logging_utils import exc_to_str
+from .utils.logging_utils import exc_to_str, get_logger
 from .utils.scraping_error import ScrapingError
 from .utils.telegram_api_helper import TelegramBot
 
@@ -37,40 +36,37 @@ DATES_URL = "/informacion/apertura-de-citas.html"
 #     file_name=LOGFILE,
 # )
 
+
 class Scraper:
     def __init__(
-            self,
-            email_every_time: bool = False,
-            verbose: bool = False,
-        ) -> None:
+        self,
+        email_every_time: bool = False,
+        verbose: bool = False,
+        max_retries: int = 0,
+    ) -> None:
         self.email_every_time = email_every_time
+        self.verbose = verbose
+        self.max_retries = max_retries
 
         # The scraper logger is the main logger (top parent) of the scraper app,
         # it's set up independently from the root logger so any logging done
         # here is not duplicated by the root logger (propagate = False).
-        self.logger = get_logger(
-            name="scraper",
-            level=logging.DEBUG,
-            file_name=LOGFILE,
-            file_output=True,
-            file_level=logging.DEBUG,
-            propagate=False,
-        )
-        if verbose:
-            console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.DEBUG)
-            console_handler.setFormatter(
-                logging.Formatter(
-                    "%(asctime)s : %(name)-12s : %(funcName)-12s : %(levelname)-12s :: "
-                    "%(message)s"
-                )
-            )
-            self.logger.addHandler(console_handler)
-
+        self.logger = get_logger(name="scraper", level=logging.DEBUG)
+        # if verbose:
+        #     console_handler = logging.StreamHandler()
+        #     console_handler.setLevel(logging.DEBUG)
+        #     console_handler.setFormatter(
+        #         logging.Formatter(
+        #             "%(asctime)s : %(name)-12s : %(funcName)-12s : %(levelname)-12s :: "
+        #             "%(message)s"
+        #         )
+        #     )
+        #     self.logger.addHandler(console_handler)
 
         # Telegram bot object.
         self.telegram_bot = TelegramBot(
-            telegram_chat_id=Config.telegram_chat_id, telegram_token=Config.telegram_token
+            telegram_chat_id=Config.telegram_chat_id,
+            telegram_token=Config.telegram_token,
         )
 
         # Gmail API helper object.
@@ -94,33 +90,43 @@ class Scraper:
             ScrapingError: If there is any error during the scraping that may
             mean that the page structure has changed.
         """
+        self.logger.info("Scraping cgeonline dates page")
         result = {}
 
-        max_retries = 5
         num_retries = 0
-        while num_retries <= max_retries:
+        while num_retries <= self.max_retries:
+            if num_retries > 0:
+                self.logger.debug("Sleeping for 5 seconds before retrying...")
+                time.sleep(5)
+                self.logger.debug("Retrying...")
+            self.logger.info(
+                "Trying to scrape cgeonline dates page, attempt %s of %s",
+                num_retries,
+                self.max_retries,
+            )
             resp = requests.get(CGEONLINE_URL + DATES_URL, timeout=10)
-
             if resp.ok:
                 break
-
-            time.sleep(30)
+            self.logger.debug("Bad response (statys code: %s)", resp.status_code)
             num_retries += 1
-            self.logger.debug(
-                "Bad response (%s), retrying... %s/%s",
-                resp.status_code,
-                num_retries,
-                max_retries,
-            )
 
         if resp.status_code == 525:
             # Special case, I'm getting quite a few of these.
+            self.logger.error(
+                "525 status code (SSL Certificates Error) in %s",
+                CGEONLINE_URL + DATES_URL,
+            )
             raise ScrapingError(
                 f"525 status code (SSL Certificates Error) in {CGEONLINE_URL + DATES_URL}",
                 resp,
             )
 
+        self.logger.debug("Response status code: %s", resp.status_code)
+        self.logger.debug("Response ok: %s", resp.ok)
         if not resp.ok:
+            self.logger.error(
+                "Bad response trying to scrape %s", CGEONLINE_URL + DATES_URL
+            )
             raise ScrapingError(
                 f"Bad response trying to scrape {CGEONLINE_URL + DATES_URL}", resp
             )
@@ -163,8 +169,8 @@ class Scraper:
             "solicitud": cells[3].a.get("href"),
         }
 
+        self.logger.debug("Completed scraping cgeonline dates page: %s", result)
         return result
-
 
     def send_notification(self, subject, content):
         """Send notification to all the channels."""
@@ -174,7 +180,7 @@ class Scraper:
             content,
         )
         try:
-            GmailApiHelper.send_email(subject=subject, content=content)
+            self.gmail_api_helper.send_email(subject=subject, content=content)
         except Exception as exc:
             self.logger.error("Error trying to send gmail notification: %s", exc)
             self.logger.debug("Traceback: %s", exc_to_str(exc))
@@ -185,9 +191,10 @@ class Scraper:
             self.logger.error("Error trying to send telegram notification: %s", exc)
             self.logger.debug("Traceback: %s", exc_to_str(exc))
 
-
     def scrape(self):
         """Main function to scrape cgeonline"""
+        self.logger.info("Scraper.scrape starting")
+
         NOW = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         try:
             row_data = self._scrape_cgeonline_dates_page()
@@ -202,11 +209,13 @@ class Scraper:
                 + CGEONLINE_URL
                 + DATES_URL
                 + "\n\n"
-                + exc.response,
+                + str(exc.response),
             )
             return 1
         except Exception as exc:
-            self.logger.error("Unexpected error while trying to scrape cgeonline: %s", exc)
+            self.logger.error(
+                "Unexpected error while trying to scrape cgeonline: %s", exc
+            )
             self.send_notification(
                 subject="Error in cgeonline scraper :(",
                 content=NOW + "\n\n" + str(exc) + "\n\n" + CGEONLINE_URL + DATES_URL,
@@ -241,7 +250,12 @@ class Scraper:
             self.logger.info("New info: %s", row_data)
             self.send_notification(
                 subject="New date in cgeonline!",
-                content=NOW + "\n\n" + str(row_data) + "\n\n" + CGEONLINE_URL + DATES_URL,
+                content=NOW
+                + "\n\n"
+                + str(row_data)
+                + "\n\n"
+                + CGEONLINE_URL
+                + DATES_URL,
             )
 
         with open(file=LAST_DATA_FILE, mode="w", encoding="utf-8") as json_file:
