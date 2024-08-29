@@ -50,11 +50,11 @@ def _get_logger(name: str, level: int, propagate: bool) -> logging.Logger:
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    # if not logger.hasHandlers():
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-    console_handler.setFormatter(get_logging_formatter())
-    logger.addHandler(console_handler)
+    if not propagate:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
+        console_handler.setFormatter(get_logging_formatter())
+        logger.addHandler(console_handler)
     if config.logfile:
         if not os.path.isdir(os.path.dirname(config.logfile)):
             raise FileNotFoundError(f"Directory for LOGFILE {config.logfile} does not exist.")
