@@ -62,16 +62,17 @@ class Scraper:
         #         )
         #     )
         #     self.logger.addHandler(console_handler)
+        self.config = Config()
 
         # Telegram bot object.
         self.telegram_bot = TelegramBot(
-            telegram_chat_id=Config.telegram_chat_id,
-            telegram_token=Config.telegram_token,
+            telegram_chat_id=self.config.telegram_chat_id,
+            telegram_token=self.config.telegram_token,
         )
 
         # Gmail API helper object.
         self.gmail_api_helper = GmailApiHelper(
-            gmail_account=Config.gmail_account, gmail_password=Config.gmail_password
+            gmail_account=self.config.gmail_account, gmail_password=self.config.gmail_password
         )
 
     def _scrape_cgeonline_dates_page(self):

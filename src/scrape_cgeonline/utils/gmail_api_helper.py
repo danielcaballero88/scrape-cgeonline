@@ -13,10 +13,24 @@ class GmailApiHelper:
         self.gmail_account = gmail_account
         self.gmail_password = gmail_password
         self.logger = get_logger(name="gmail_api_helper", level=logging.DEBUG)
+        self.logger.debug(
+            "Gmail account: %s\n"
+            "Gmail password: %s",
+            gmail_account,
+            gmail_password,
+        )
 
     def send_email(self, subject, content):
         """Send an email using gmail."""
         self.logger.info("Sending email.")
+        self.logger.debug(
+            "Subject (%s): %s\n"
+            "Content (%s): %s",
+            type(subject),
+            subject,
+            type(content),
+            content,
+        )
         # Create email message.
         message = EmailMessage()
         message["To"] = "danielcaballero88@gmail.com"
