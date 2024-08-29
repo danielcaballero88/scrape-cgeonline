@@ -5,13 +5,6 @@ import sys
 import traceback
 
 from .config import config
-from .get_package_dir import get_package_dir
-
-
-HERE = os.path.dirname(__file__)
-PKG_DIR = get_package_dir()
-os.makedirs(os.path.join(PKG_DIR, "log"), exist_ok=True)
-LOGFILE = os.path.join(PKG_DIR, "log", "scrape_cgeonline.log")
 
 
 def exc_to_str(exception: Exception) -> str:
@@ -62,10 +55,13 @@ def _get_logger(name: str, level: int, propagate: bool) -> logging.Logger:
     console_handler.setLevel(level)
     console_handler.setFormatter(get_logging_formatter())
     logger.addHandler(console_handler)
-    file_handler = logging.FileHandler(LOGFILE, mode="a")
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(get_logging_formatter())
-    logger.addHandler(file_handler)
+    if config.logfile:
+        if not os.path.isdir(os.path.dirname(config.logfile)):
+            raise FileNotFoundError(f"Directory for LOGFILE {config.logfile} does not exist.")
+        file_handler = logging.FileHandler(config.logfile, mode="a")
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(get_logging_formatter())
+        logger.addHandler(file_handler)
 
     logger.propagate = propagate
 
@@ -75,15 +71,23 @@ def _get_logger(name: str, level: int, propagate: bool) -> logging.Logger:
 
 def get_logger(name: str) -> logging.Logger:
     """Get a logger."""
+    logging_level = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "CRITICAL": logging.CRITICAL,
+    }[config.logging_level]
+
     if not name or name == "scraper":
         name = "scraper"
         propagate = False
     else:
         # Make sure the root scraper logger exists first
-        _get_logger("scraper", level=config.logging_level, propagate=False)
+        _get_logger("scraper", level=logging_level, propagate=False)
         name = "scraper." + name
         propagate = True
 
-    logger = _get_logger(name=name, level=config.logging_level, propagate=propagate)
+    logger = _get_logger(name=name, level=logging_level, propagate=propagate)
 
     return logger

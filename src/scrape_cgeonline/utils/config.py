@@ -1,6 +1,5 @@
 """Settings module."""
 import os
-import logging
 from enum import Enum
 
 from dotenv import find_dotenv, load_dotenv
@@ -62,6 +61,10 @@ class Config:
     @property
     def logging_level(self) -> str:
         return os.environ.get("LOGGING_LEVEL", "INFO")
+
+    @property
+    def logfile(self) -> str | None:
+        return os.environ.get("LOGFILE")
 
 
 config = Config()
