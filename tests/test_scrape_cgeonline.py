@@ -3,6 +3,7 @@ import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
 from src.scrape_cgeonline.scrape_cgeonline import Scraper
+from src.scrape_cgeonline.utils.scraping_error import ScrapingError
 from tests.mock_response import MockGetResponse
 
 # pylint: disable=protected-access
@@ -33,7 +34,7 @@ def test_scrape_cgeonline_dates_page_error(mocker: MockerFixture):
 
     scraper = Scraper()
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ScrapingError):
         scraper._scrape_cgeonline_dates_page()
 
 
