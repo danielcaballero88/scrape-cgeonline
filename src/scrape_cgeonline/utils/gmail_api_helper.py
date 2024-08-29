@@ -12,7 +12,7 @@ class GmailApiHelper:
     def __init__(self, gmail_account, gmail_password):
         self.gmail_account = gmail_account
         self.gmail_password = gmail_password
-        self.logger = get_logger(name="gmail_api_helper", level=logging.DEBUG)
+        self.logger = get_logger(name="gmail_api_helper")
         self.logger.debug(
             "Gmail account: %s\n"
             "Gmail password: %s",

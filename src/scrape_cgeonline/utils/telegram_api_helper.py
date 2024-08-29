@@ -17,7 +17,7 @@ class TelegramBot:
     def __init__(self, telegram_chat_id, telegram_token):
         self.telegram_chat_id = telegram_chat_id
         self.telegram_token = telegram_token
-        self.logger = get_logger(name="telegram_bot", level=logging.DEBUG)
+        self.logger = get_logger(name="telegram_bot")
 
     def send_telegram_message(self, message: str) -> requests.Response:
         """Send a message to the chat in the config."""

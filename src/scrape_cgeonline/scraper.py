@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from .utils.config import Config
+from .utils.config import config
 from .utils.gmail_api_helper import GmailApiHelper
 from .utils.logging_utils import exc_to_str, get_logger
 from .utils.scraping_error import ScrapingError
@@ -27,15 +27,6 @@ LAST_DATA_FILE = os.path.join(BASE_DIR, "log", "last_data.json")
 CGEONLINE_URL = "https://www.cgeonline.com.ar"
 DATES_URL = "/informacion/apertura-de-citas.html"
 
-# # Root logger defines the file and level for any log propagating up
-# # the hierarchy. Useful to catch 3rd party libraries warnings and error
-# # logs.
-# root_logger = get_logger(
-#     level=logging.WARNING,
-#     file_output=True,
-#     file_name=LOGFILE,
-# )
-
 
 class Scraper:
     def __init__(
@@ -49,18 +40,17 @@ class Scraper:
         # The scraper logger is the main logger (top parent) of the scraper app,
         # it's set up independently from the root logger so any logging done
         # here is not duplicated by the root logger (propagate = False).
-        self.logger = get_logger(name="scraper", level=logging.DEBUG)
-        self.config = Config()
+        self.logger = get_logger(name="scraper")
 
         # Telegram bot object.
         self.telegram_bot = TelegramBot(
-            telegram_chat_id=self.config.telegram_chat_id,
-            telegram_token=self.config.telegram_token,
+            telegram_chat_id=config.telegram_chat_id,
+            telegram_token=config.telegram_token,
         )
 
         # Gmail API helper object.
         self.gmail_api_helper = GmailApiHelper(
-            gmail_account=self.config.gmail_account, gmail_password=self.config.gmail_password
+            gmail_account=config.gmail_account, gmail_password=config.gmail_password
         )
 
     def _scrape_cgeonline_dates_page(self):

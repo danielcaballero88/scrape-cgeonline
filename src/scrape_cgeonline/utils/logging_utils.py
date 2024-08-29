@@ -4,6 +4,7 @@ import os
 import sys
 import traceback
 
+from .config import config
 from .get_package_dir import get_package_dir
 
 
@@ -51,8 +52,6 @@ loggers: dict[str, logging.Logger] = {}
 
 
 def _get_logger(name: str, level: int, propagate: bool) -> logging.Logger:
-    print("_get_logger -> name, level", name, level)
-    print("_get_logger -> loggers", loggers)
     if name in loggers:
         return loggers[name]
 
@@ -74,18 +73,17 @@ def _get_logger(name: str, level: int, propagate: bool) -> logging.Logger:
 
     return logger
 
-def get_logger(name: str, level: int) -> logging.Logger:
+def get_logger(name: str) -> logging.Logger:
     """Get a logger."""
-    print("get_logger -> name, level", name, level)
     if not name or name == "scraper":
         name = "scraper"
         propagate = False
     else:
         # Make sure the root scraper logger exists first
-        _get_logger("scraper", level=level, propagate=False)
+        _get_logger("scraper", level=config.logging_level, propagate=False)
         name = "scraper." + name
         propagate = True
 
-    logger = _get_logger(name=name, level=level, propagate=propagate)
+    logger = _get_logger(name=name, level=config.logging_level, propagate=propagate)
 
     return logger

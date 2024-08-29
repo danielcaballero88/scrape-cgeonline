@@ -19,7 +19,7 @@ class MockGetResponse:
             "new_date": "test_response_new_date.html",
         }[case]
         self.response_filepath = os.path.join(DATA_DIR, response_filename)
-        self.logger = get_logger("mock_get_response", level=logging.DEBUG)
+        self.logger = get_logger("mock_get_response")
 
     @property
     def text(self):

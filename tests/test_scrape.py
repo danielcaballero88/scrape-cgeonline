@@ -40,7 +40,7 @@ class MockTelegramBot:
         self.chat_id = "123"
         self.expected_message = expected_message
         self.mock_send_telegram_message_times_called = 0
-        self.logger = get_logger("mock_telegram_bot", level=logging.DEBUG)
+        self.logger = get_logger("mock_telegram_bot")
 
     def send_telegram_message(self, message):
         """Mock the method to send a telegram message."""
@@ -53,7 +53,7 @@ class MockTelegramBot:
 
 def test_scrape_no_changes(mocker: MockerFixture):
     """Test the scrape function when no changes."""
-    logger = get_logger("test_scrape_no_changes", level=logging.DEBUG)
+    logger = get_logger("test_scrape_no_changes")
     logger.info("Test scrape no changes")
     mock_get_response = mocker.Mock(return_value=MockGetResponse("no_changes"))
     mocker.patch("requests.get", mock_get_response)
@@ -75,7 +75,7 @@ def test_scrape_no_changes(mocker: MockerFixture):
 
 def test_scrape_error(mocker: MockerFixture):
     """Test the scrape function when error."""
-    logger = get_logger("test_scrape_error", level=logging.DEBUG)
+    logger = get_logger("test_scrape_error")
     logger.info("Test scrape error")
 
     mock_get_response = mocker.Mock(return_value=MockGetResponse("error"))
