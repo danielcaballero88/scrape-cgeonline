@@ -11,7 +11,7 @@ import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from .config import Config
+from .utils.config import Config
 from .utils.gmail_api_helper import GmailApiHelper
 from .utils.logging_utils import exc_to_str, get_logger
 from .utils.scraping_error import ScrapingError
@@ -41,27 +41,15 @@ class Scraper:
     def __init__(
         self,
         email_every_time: bool = False,
-        verbose: bool = False,
         max_retries: int = 0,
     ) -> None:
         self.email_every_time = email_every_time
-        self.verbose = verbose
         self.max_retries = max_retries
 
         # The scraper logger is the main logger (top parent) of the scraper app,
         # it's set up independently from the root logger so any logging done
         # here is not duplicated by the root logger (propagate = False).
         self.logger = get_logger(name="scraper", level=logging.DEBUG)
-        # if verbose:
-        #     console_handler = logging.StreamHandler()
-        #     console_handler.setLevel(logging.DEBUG)
-        #     console_handler.setFormatter(
-        #         logging.Formatter(
-        #             "%(asctime)s : %(name)-12s : %(funcName)-12s : %(levelname)-12s :: "
-        #             "%(message)s"
-        #         )
-        #     )
-        #     self.logger.addHandler(console_handler)
         self.config = Config()
 
         # Telegram bot object.

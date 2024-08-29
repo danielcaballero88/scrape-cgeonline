@@ -4,7 +4,7 @@ import logging
 import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
-from src.scrape_cgeonline.scrape_cgeonline import Scraper
+from src.scrape_cgeonline.scraper import Scraper
 from src.scrape_cgeonline.utils.gmail_api_helper import GmailApiHelper
 from src.scrape_cgeonline.utils.telegram_api_helper import TelegramBot
 from src.scrape_cgeonline.utils.logging_utils import get_logger

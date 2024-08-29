@@ -1,7 +1,7 @@
 """Entry point script to scrape cgeonline."""
 import argparse
 
-from src.scrape_cgeonline.scrape_cgeonline import Scraper
+from scrape_cgeonline.scraper import Scraper
 
 
 def _parse_arguments():

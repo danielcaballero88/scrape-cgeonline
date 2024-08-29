@@ -5,8 +5,8 @@ from enum import Enum
 
 from dotenv import find_dotenv, load_dotenv
 
-from .utils.logging_utils import get_logger
-from .utils.get_package_dir import get_package_dir
+from .logging_utils import get_logger
+from .get_package_dir import get_package_dir
 
 
 class Environment(str, Enum):

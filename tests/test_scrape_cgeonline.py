@@ -2,7 +2,7 @@
 import pytest  # pylint: disable=unused-import
 from pytest_mock.plugin import MockerFixture
 
-from src.scrape_cgeonline.scrape_cgeonline import Scraper
+from src.scrape_cgeonline.scraper import Scraper
 from src.scrape_cgeonline.utils.scraping_error import ScrapingError
 from tests.mock_response import MockGetResponse
 
